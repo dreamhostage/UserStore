@@ -3,7 +3,6 @@ Install tronbox and npm dependencies:
 
 sudo npm install -g tronbox
 docker pull trontools/quickstart
-npm install
 
 Now we have to run tron node for development purposes. To run the contrainer use:
 
