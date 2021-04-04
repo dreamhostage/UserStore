@@ -1,9 +1,9 @@
-from tprpy import Tpr
-from tprpy.keys import PrivateKey
-from tprpy.providers import HTTPProvider
+from tronpy import Tron
+from tronpy.keys import PrivateKey
+from tronpy.providers import HTTPProvider
 import traceback
 
-contract_address = "TV89ZUZvaeUnWDiA7LUpds9HewUpmCVtmC"
+contract_address = "TSiuAthUc3y4G2v4YnTD2PpusYZouWTUxD"
 HTTPprovider = "http://localhost:9090"
 userAddress = "THHoZxNjYxMwCvPXWt4dwWjcTN1qTN81go"
 userPK = "7cbc531343006ca511b051576053cf48da63c27284db3400ad02eb88633e0b21"
@@ -14,8 +14,19 @@ class UserStoreAPI(object):
     def __init__(self, HTTPprovider, contract_address):
         self.contract_address = contract_address
         self.HTTPprovider = HTTPprovider
-        self.client = Tpr(HTTPProvider(HTTPprovider))
+        self.client = Tron(HTTPProvider(HTTPprovider))
         self.contract = self.client.get_contract(contract_address)
+
+    def top_up_address(self, amount, address):
+        txn = (
+        self.client.trx.transfer("THHoZxNjYxMwCvPXWt4dwWjcTN1qTN81go", address, amount)
+        .memo("test memo")
+        .fee_limit(100_000_000)
+        .build()
+        .inspect()
+        .sign(PrivateKey(bytes.fromhex('7cbc531343006ca511b051576053cf48da63c27284db3400ad02eb88633e0b21')))
+        .broadcast())
+        #print(txn)
 
     def getTokenData(self, key):
         return self.contract.functions.getTokenData(key)
@@ -35,6 +46,8 @@ class UserStoreAPI(object):
             if receipt.get('receipt').get('result') == 'SUCCESS':
                 return True
             else:
+                print(txn)
+                print(receipt)
                 return 'REVERT'
         except Exception as e:
             return e
@@ -73,39 +86,93 @@ class UserStoreAPI(object):
 # Tests-------------------------------------------------------------------------------------------------------------
 
 contractInstance = UserStoreAPI(HTTPprovider, contract_address)
-tokenKey = 'Token key'
-tokenData = '1'
-NewTokenData = '2'
-transferAddress = 'TCkkvpLD1v8Cn6m412GHS2gZN2fqUT7vVV'
-transferAddressPK = 'ef84a04038a9b34ebc353daaa57abe99b4c6b6235631ccf7cc1baeb7fc41c39a'
 
-response = contractInstance.mintToken(tokenKey, tokenData, userAddress, userPK)
+def main():
+    input_value = 'q'
+    while input_value != '0':
+        print ("\n" * 100)
+        print(' ------------------------------------')
+        print('1 - generate address and private key |')
+        print('2 - mint token                       |')
+        print('3 - get token data                   |')
+        print('4 - get token owner                  |')
+        print('5 - transfer token                   |')
+        print(' ------------------------------------')
+        print('\n')
+        print('0 - EXIT')
+        print('Select your choice:')
+        input_value = input()
+        
+        if input_value == '1':
+            data = contractInstance.client.generate_address()
+            contractInstance.top_up_address(15000000, data.get('base58check_address'))
+            print ("\n" * 100)
+            print('--------------------------------------------------------------------------------------')
+            print('| Your address:     ' + data.get('base58check_address') + '                               |')
+            print('| Your private key: ' + data.get('private_key') + ' |')
+            print('--------------------------------------------------------------------------------------')
+            print('Press any key...')
+            key = input()
+            print ("\n" * 100)
+        if input_value == '2':
+            print('Enter token data:')
+            data = input()
+            print('Enter token key:')
+            key = input()
+            print('Enter your address:')
+            address = input()
+            print('Enter your Private Key:')
+            PK = input()
+            mintResponse = contractInstance.mintToken(key, data, address, PK)
+            if mintResponse == True:
+                print('Mint Token:          OK')
+            else:
+                print('Mint Token:          Error')
+            print('Press any key...')
+            input()
+        if input_value == '3':
+            print ("\n" * 100)
+            print('Enter token key:')
+            key = input()
+            tokenData = contractInstance.getTokenData(key)
+            print ("\n" * 100)
+            print('--------------------------------------------------------------------------------------')
+            print('Token data:          ' + tokenData)
+            print('--------------------------------------------------------------------------------------')
+            print('Press any key...')
+            input()
+        if input_value == '4':
+            print ("\n" * 100)
+            print('Enter token key:')
+            key = input()
+            tokenOwner = contractInstance.getTokenOwner(key)
+            print ("\n" * 100)
+            print('--------------------------------------------------------------------------------------')
+            print('Token owner:         ' + tokenOwner)
+            print('--------------------------------------------------------------------------------------')
+            print('Press any key...')
+            input()
+        if input_value == '5':
+            print ("\n" * 100)
+            print('Enter token key:')
+            tKey = input()
+            print('Enter transferring address:')
+            tAddress = input()
+            print('Enter your address:')
+            oAddress = input()
+            print('Enter your private key:')
+            oPK = input()
+            response = contractInstance.transferToken(tKey, oAddress, oPK, tAddress)
+            if response == True:
+                print('Transfering:         OK')
+            else:
+                print('Transfering:         ERROR')
+            print('Press any key...')
+            input()
 
-if response == True:
-    print('Mint Token:          OK')
-else:
-    print(response)
 
-tokenData = contractInstance.getTokenData(tokenKey)
-print('Token data:          ' + tokenData)
+main()
 
-tokenOwner = contractInstance.getTokenOwner(tokenKey)
-print('Token owner:         ' + tokenOwner)
-
-response = contractInstance.transferToken(tokenKey, userAddress, userPK, transferAddress)
-
-if response == True:
-    print('Transfering:         OK')
-else:
-    print(response)
-
-NewTokenOwner = contractInstance.getTokenOwner(tokenKey)
-print('New token owner:     ' + NewTokenOwner)
-
-if contractInstance.changeTokenData(tokenKey, NewTokenData, transferAddress, transferAddressPK) == True:
-    print('Changing Token data: OK')
-else:
-    print('Changing Token data: ERROR')
-
-tokenData = contractInstance.getTokenData(tokenKey)
-print('New token data:      ' + tokenData)
+# contractInstance.top_up_address(1000000, 'TJmKM9wSKWALciWYLCYG2enAfekZwgoXDc')
+# data = contractInstance.client.get_account_balance('TXuqUTeJQK92fwr4376AJSXoL1nTjCYjBc')
+# print(data)
