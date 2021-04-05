@@ -1,5 +1,5 @@
 # UserStore
-Smart contract is deploy into the Tron network. For interacting use API implemented on native python Tron SDK. Tests was written on JavaScript using TronWeb lubrary.
+Smart contract is deploy into the Tron network. For interacting use API implemented on native python Tron SDK. Tests was written on JavaScript using TronWeb library.
 Smart contract is able to mint unique Token and assign it to ownable of any user. User also is able to transfer ownable of Token. Every Token has string data which can be accessed by key.
 
 Install tronbox and npm dependencies:
