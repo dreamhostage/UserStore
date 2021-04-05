@@ -3,7 +3,7 @@ from tronpy.keys import PrivateKey
 from tronpy.providers import HTTPProvider
 import traceback
 
-contract_address = "TSiuAthUc3y4G2v4YnTD2PpusYZouWTUxD"
+contract_address = "TT61YWuH8zdxxHkpntMoBLDny82GzVrvVn"
 HTTPprovider = "http://localhost:9090"
 userAddress = "THHoZxNjYxMwCvPXWt4dwWjcTN1qTN81go"
 userPK = "7cbc531343006ca511b051576053cf48da63c27284db3400ad02eb88633e0b21"
@@ -29,7 +29,10 @@ class UserStoreAPI(object):
         #print(txn)
 
     def getTokenData(self, key):
-        return self.contract.functions.getTokenData(key)
+        data = self.contract.functions.getTokenData(key)
+        if len(data) == 0:
+            data = 'Invalid TOKEN'
+        return data
 
     def getTokenOwner(self, key):
         return self.contract.functions.getTokenOwner(key)
@@ -136,22 +139,40 @@ def main():
             key = input()
             tokenData = contractInstance.getTokenData(key)
             print ("\n" * 100)
-            print('--------------------------------------------------------------------------------------')
-            print('Token data:          ' + tokenData)
-            print('--------------------------------------------------------------------------------------')
+            if tokenData == 'Invalid TOKEN':
+                print('--------------------------------------------------------------------------------------')
+                print('############################## Invalid token key #####################################')
+                print('--------------------------------------------------------------------------------------')
+            else:
+                print('--------------------------------------------------------------------------------------')
+                print('Token data:          ' + tokenData)
+                print('--------------------------------------------------------------------------------------')
             print('Press any key...')
             input()
         if input_value == '4':
             print ("\n" * 100)
             print('Enter token key:')
             key = input()
-            tokenOwner = contractInstance.getTokenOwner(key)
-            print ("\n" * 100)
-            print('--------------------------------------------------------------------------------------')
-            print('Token owner:         ' + tokenOwner)
-            print('--------------------------------------------------------------------------------------')
-            print('Press any key...')
-            input()
+            try:
+                print ("\n" * 100)
+                tokenData = contractInstance.getTokenData(key)
+                if tokenData == 'Invalid TOKEN':
+                    print('--------------------------------------------------------------------------------------')
+                    print('############################## Invalid token key #####################################')
+                    print('--------------------------------------------------------------------------------------')
+                else:
+                    tokenOwner = contractInstance.getTokenOwner(key)
+                    print('--------------------------------------------------------------------------------------')
+                    print('Token owner:         ' + tokenOwner)
+                    print('--------------------------------------------------------------------------------------')
+                print('Press any key...')
+                input()
+            except Exception:
+                print('--------------------------------------------------------------------------------------')
+                print('############################## Invalid token key #####################################')
+                print('--------------------------------------------------------------------------------------')
+                print('Press any key...')
+                input()
         if input_value == '5':
             print ("\n" * 100)
             print('Enter token key:')
